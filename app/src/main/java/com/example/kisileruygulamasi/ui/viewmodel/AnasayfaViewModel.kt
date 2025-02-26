@@ -25,15 +25,22 @@ class AnasayfaViewModel @Inject constructor (var krepo:KisilerRepository): ViewM
     }
     fun kisileriYukle(){
         CoroutineScope(Dispatchers.Main).launch {
-           kisilerListesi.value = krepo.kisileriYukle()
+            try {
+                kisilerListesi.value = krepo.kisileriYukle()
+            } catch (e: Exception) {
+                e.printStackTrace()  // Hatanın logunu alalım.
+            }
         }
     }
 
-     fun ara(aramaKelimesi:String){
+    fun ara(aramaKelimesi: String) {
         CoroutineScope(Dispatchers.Main).launch {
-            kisilerListesi.value = krepo.ara(aramaKelimesi)
+            try {
+                kisilerListesi.value = krepo.ara(aramaKelimesi)
+            } catch (e: Exception) {
+                e.printStackTrace()  // Log alalım, böylece hata nedenini görebiliriz.
+            }
         }
     }
-
-
 }
+
