@@ -60,8 +60,4 @@ class AnasayfaFragment : Fragment() {
         Navigation.gecisYap(it,R.id.kisiKayitGecis)
     }
 
-    override fun onResume() {
-        super.onResume()
-        viewModel.kisileriYukle()
-    }
 }

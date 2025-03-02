@@ -1,38 +1,66 @@
 package com.example.kisileruygulamasi.data.datasource
 
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import com.example.kisileruygulamasi.data.entity.Kisiler
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.google.firebase.firestore.CollectionReference
 
-class KisilerDataSource {
-    suspend fun kisileriYukle() : List<Kisiler> =
-        withContext(Dispatchers.IO){
-            val kisilerListesi = arrayListOf<Kisiler>()
-            val k1= Kisiler(1,"Ahmet","1111")
-            val k2= Kisiler(2,"Zeynep","2222")
-            val k3= Kisiler(3,"Beyza","3333")
-            kisilerListesi.add(k1)
-            kisilerListesi.add(k2)
-            kisilerListesi.add(k3)
-            return@withContext kisilerListesi
+class KisilerDataSource(var collectionKisiler: CollectionReference) {
+    var kisilerListesi = MutableLiveData<List<Kisiler>>()
+
+    fun kisileriYukle(): MutableLiveData<List<Kisiler>> {
+        collectionKisiler.addSnapshotListener { value, error ->
+            if (value != null) {
+                val liste = ArrayList<Kisiler>()
+
+                for (d in value.documents) {
+                    val kisi = d.toObject(Kisiler::class.java)
+                    if (kisi != null) {
+                        kisi.kisi_id = d.id
+                        liste.add(kisi)
+                    }
+                }
+                kisilerListesi.value = liste
+            }
         }
-
-   suspend fun ara(aramaKelimesi:String): List<Kisiler> =
-       withContext(Dispatchers.IO){
-           val kisilerListesi = arrayListOf<Kisiler>()
-           val k1= Kisiler(1,"Ahmet","1111")
-              kisilerListesi.add(k1)
-          return@withContext kisilerListesi
-       }
-
-    suspend fun kaydet(kisi_ad:String,kisi_tel:String){
-        Log.e("Kisi Kaydet","$kisi_ad - $kisi_tel")
+        return kisilerListesi
     }
-    suspend fun guncelle(kisi_id:Int,kisi_ad:String,kisi_tel:String){
-        Log.e("Kisi Güncelle","$kisi_ad - $kisi_tel")
+
+    fun ara(aramaKelimesi: String): MutableLiveData<List<Kisiler>> {
+        var kisilerListesi = MutableLiveData<List<Kisiler>>()
+        collectionKisiler.addSnapshotListener { value, error ->
+            if (value != null) {
+                val liste = ArrayList<Kisiler>()
+
+                for (d in value.documents) {
+                    val kisi = d.toObject(Kisiler::class.java)
+                    if (kisi != null) {
+                        if (kisi.kisi_ad!!.lowercase().contains(aramaKelimesi.lowercase())) {
+                            kisi.kisi_id = d.id
+                            liste.add(kisi)
+                        }
+                    }
+                }
+                kisilerListesi.value = liste
+            }
+        }
+        return kisilerListesi
     }
-    suspend fun sil(kisi_id:Int){
-        Log.e("Kişi sİL",kisi_id.toString())
+
+    fun kaydet(kisi_ad: String, kisi_tel: String) {
+        val yenikisi = Kisiler("", kisi_ad, kisi_tel)
+        collectionKisiler.document().set(yenikisi)
+    }
+
+    fun guncelle(kisi_id: String, kisi_ad: String, kisi_tel: String) {
+        val guncellenenKisi = HashMap<String, Any>() // Hata düzeltilmiş!
+        guncellenenKisi["kisi_ad"] = kisi_ad
+        guncellenenKisi["kisi_tel"] = kisi_tel
+        collectionKisiler.document(kisi_id).update(guncellenenKisi)
+    }
+
+    fun sil(kisi_id: String) {
+        collectionKisiler.document(kisi_id).delete()
     }
 }
+
